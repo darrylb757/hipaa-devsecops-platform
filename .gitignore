@@ -1,0 +1,21 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+terraform/bootstrap/.terraform.lock.hcl
+
+
+# Terraform variable files (may contain secrets)
+*.tfvars
+*.tfvars.json
+
+# CLI / OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
