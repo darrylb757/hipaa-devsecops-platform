@@ -17,3 +17,7 @@ output "db_subnet_ids" {
 output "azs" {
   value = module.vpc.azs
 }
+
+output "bastion_public_ip" {
+  value = module.bastion.bastion_public_ip
+}
