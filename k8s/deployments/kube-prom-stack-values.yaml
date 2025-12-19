@@ -1,0 +1,38 @@
+# kube-prometheus-stack baseline values
+# NOTE:
+# - Stack is already installed via Helm
+# - Day-2 configuration (alerts, routing) is managed via CRDs
+# - This file documents intended baseline settings
+
+grafana:
+  enabled: true
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: true
+    size: 10Gi
+  adminPassword: "REDACTED-ROTATED-VIA-SECRET"
+
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+
+alertmanager:
+  alertmanagerSpec:
+    replicas: 1
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi

@@ -1,0 +1,19 @@
+controller:
+  admin:
+    createSecret: true
+
+  serviceType: ClusterIP
+
+  installPlugins:
+    - kubernetes
+    - workflow-aggregator
+    - git
+    - configuration-as-code
+    - credentials
+    - blueocean
+
+  jenkinsUriPrefix: "/"
+
+persistence:
+  enabled: true
+  size: 10Gi

@@ -1,0 +1,38 @@
+resources:
+  - ../../base
+patches:
+  - target:
+      kind: Namespace
+      name: apps-dev
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: apps-stage
+  - target:
+      kind: Deployment
+      name: patient-service
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: apps-stage
+  - target:
+      kind: Service
+      name: patient-service
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: apps-stage
+  - target:
+      kind: Ingress
+      name: patient-service
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: apps-stage
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: patient-service
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: apps-stage
