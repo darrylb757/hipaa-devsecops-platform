@@ -1,0 +1,68 @@
+pipeline {
+  agent {
+    kubernetes {
+      label 'jenkins-cd'
+      defaultContainer 'kubectl'
+    }
+  }
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+  }
+
+  parameters {
+    choice(
+      name: 'ENVIRONMENT',
+      choices: ['dev', 'stage', 'prod'],
+      description: 'Target environment'
+    )
+  }
+
+  stages {
+
+    stage('Deploy') {
+      steps {
+        script {
+          echo "Deploying to ${params.ENVIRONMENT}"
+
+          sh """
+            kubectl apply -k k8s/apps/patient-service/overlays/${params.ENVIRONMENT}
+          """
+        }
+      }
+    }
+
+    stage('Smoke Test') {
+      steps {
+        script {
+          sh """
+            kubectl rollout status deployment patient-service \
+              -n apps-${params.ENVIRONMENT} \
+              --timeout=120s
+          """
+        }
+      }
+    }
+
+    stage('Approval (Stage/Prod)') {
+      when {
+        expression {
+          params.ENVIRONMENT != 'dev'
+        }
+      }
+      steps {
+        input message: "Approve deployment to ${params.ENVIRONMENT}?"
+      }
+    }
+  }
+
+  post {
+    success {
+      echo "Deployment to ${params.ENVIRONMENT} successful"
+    }
+    failure {
+      echo "Deployment to ${params.ENVIRONMENT} failed"
+    }
+  }
+}
