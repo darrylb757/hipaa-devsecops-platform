@@ -1,0 +1,59 @@
+name: Kubernetes Manifest Checks
+
+on:
+  pull_request:
+    paths:
+      - "k8s/**"
+      - ".github/workflows/ci-k8s.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "k8s/**"
+      - ".github/workflows/ci-k8s.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  k8s-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Kustomize build to ensure overlays render
+      - name: Install kustomize
+        run: |
+          curl -sSLo kustomize.tar.gz https://github.com/kubernetes-sigs/kustomize/releases/latest/download/kustomize_linux_amd64.tar.gz
+          tar -xzf kustomize.tar.gz
+          sudo mv kustomize /usr/local/bin/kustomize
+
+      - name: Render manifests (dev overlay)
+        run: |
+          kustomize build k8s/apps/patient-service/overlays/dev > /tmp/patient-service-dev.yaml
+
+      - name: Render manifests (stage overlay)
+        run: |
+          kustomize build k8s/apps/patient-service/overlays/stage > /tmp/patient-service-stage.yaml
+
+      - name: Render manifests (prod overlay)
+        run: |
+          kustomize build k8s/apps/patient-service/overlays/prod > /tmp/patient-service-prod.yaml
+
+      # kubeconform schema validation
+      - name: kubeconform
+        run: |
+          curl -sSLo kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
+          tar -xzf kubeconform.tar.gz
+          sudo mv kubeconform /usr/local/bin/kubeconform
+          kubeconform -strict -ignore-missing-schemas /tmp/patient-service-dev.yaml
+          kubeconform -strict -ignore-missing-schemas /tmp/patient-service-stage.yaml
+          kubeconform -strict -ignore-missing-schemas /tmp/patient-service-prod.yaml
+
+      # kube-linter (best-effort rules)
+      - name: kube-linter
+        uses: stackrox/kube-linter-action@v1
+        with:
+          directory: k8s
+          # optional: config: .kube-linter.yaml

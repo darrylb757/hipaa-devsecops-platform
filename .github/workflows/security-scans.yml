@@ -1,0 +1,88 @@
+name: Container Security Scans
+
+on:
+  pull_request:
+    paths:
+      - "k8s/apps/patient-service/app/**"
+      - ".github/workflows/security-scans.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "k8s/apps/patient-service/app/**"
+      - ".github/workflows/security-scans.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPO: patient-service
+  IMAGE_TAG: 0.1.0
+  APP_DIR: k8s/apps/patient-service/app
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Configure AWS via GitHub OIDC (no secrets)
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GHA_AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Ensure ECR repo exists (idempotent)
+        run: |
+          aws ecr describe-repositories --repository-names "${ECR_REPO}" >/dev/null 2>&1 \
+          || aws ecr create-repository --repository-name "${ECR_REPO}"
+
+      - name: Build image
+        run: |
+          docker build -t "${ECR_REPO}:${IMAGE_TAG}" "${APP_DIR}"
+
+      - name: Tag image for ECR
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          ECR_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"
+          echo "ECR_URI=${ECR_URI}" >> $GITHUB_ENV
+          docker tag "${ECR_REPO}:${IMAGE_TAG}" "${ECR_URI}"
+
+      # Trivy scans the local image before push
+      - name: Trivy image scan (fail HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: ${{ env.ECR_URI }}
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "HIGH,CRITICAL"
+
+      - name: Push image to ECR (main only)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker push "${ECR_URI}"
+
+      # Optional SBOM
+      - name: Generate SBOM (optional)
+        if: github.ref == 'refs/heads/main'
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.ECR_URI }}
+          format: spdx-json
+          output-file: sbom-patient-service.spdx.json
+
+      - name: Upload SBOM artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-patient-service
+          path: sbom-patient-service.spdx.json

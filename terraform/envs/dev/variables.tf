@@ -24,3 +24,7 @@ variable "tags" {
     ManagedBy   = "Terraform"
   }
 }
+
+variable "rds_password" {
+  sensitive = true
+}

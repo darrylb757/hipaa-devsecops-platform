@@ -21,3 +21,11 @@ output "azs" {
 output "bastion_public_ip" {
   value = module.bastion.bastion_public_ip
 }
+
+output "bastion_instance_id" {
+  value = module.bastion.instance_id
+}
+
+output "github_actions_role_arn" {
+  value = module.github_oidc.role_arn
+}
