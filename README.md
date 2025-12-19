@@ -43,40 +43,14 @@ Core design principles
 
 High-level flow
 
-Developer
-  ↓
-GitHub Actions (CI + Security Gates)
-  ↓
-Artifact Registry (ECR / S3)
-  ↓
-Jenkins (CD, approvals, promotion)
-  ↓
-Private EKS Cluster
-  ↓
-Secure Microservices + Data Layer
+## 🧱 Platform Architecture (AWS)
 
-📁 Repository Structure
-hipaa-devsecops-platform/
-├── terraform/              # All AWS infrastructure (IaC)
-│   ├── bootstrap/          # Remote state (S3 + DynamoDB + KMS)
-│   ├── envs/dev/           # Environment-specific wiring
-│   └── modules/            # Reusable Terraform modules
-│
-├── k8s/                    # Kubernetes manifests & platform config
-│   ├── apps/               # Application workloads (Kustomize)
-│   ├── cicd/jenkins/       # Jenkins Helm config + pipeline
-│   ├── deployments/        # Platform-level deployments
-│   └── serviceaccounts/    # IRSA-backed service accounts
-│
-├── docs/                   # Design docs, runbooks, and strategy
-│   ├── cicd-strategy.md
-│   ├── pipeline-overview.md
-│   ├── promotion-strategy.md
-│   ├── security-model.md
-│   ├── dr-runbook.md
-│   └── STATUS.md
-│
-└── README.md               # You are here
+The diagram below illustrates the end-to-end DevSecOps platform, including
+network segmentation, private EKS access, CI/CD flow, secrets management,
+observability, and the HIPAA-aligned data layer.
+
+![HIPAA DevSecOps Platform Architecture](docs/diagrams/platform-architecture.png)
+
 
 🧩 Phased Build (Real-World Order)
 
