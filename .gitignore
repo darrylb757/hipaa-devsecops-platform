@@ -1,22 +1,74 @@
+############################
 # Terraform
+############################
 **/.terraform/*
 *.tfstate
 *.tfstate.*
 *.tfstate.backup
 crash.log
 crash.*.log
-terraform/bootstrap/.terraform.lock.hcl
 
+# Terraform lock files (keep ONE at root if desired)
+**/.terraform.lock.hcl
+!terraform/.terraform.lock.hcl
 
 # Terraform variable files (may contain secrets)
 *.tfvars
 *.tfvars.json
 
-# CLI / OS noise
+############################
+# Kubernetes / Helm
+############################
+# Rendered manifests
+*.rendered.yaml
+*.rendered.yml
+
+# Helm
+**/charts/**/charts/
+**/charts/**/tmp/
+**/charts/**/values.local.yaml
+
+############################
+# CI/CD Artifacts
+############################
+*.tar.gz
+*.zip
+*.tgz
+*.sbom
+sbom-*.json
+
+############################
+# Secrets / Credentials
+############################
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# AWS / Cloud creds (never commit)
+.aws/
+aws-credentials
+aws_config
+
+############################
+# OS / Editor Noise
+############################
 .DS_Store
+Thumbs.db
 .idea/
 .vscode/
 *.swp
+*.swo
+*.tmp
 
-# Logs
+############################
+# Logs / Debug
+############################
 *.log
+logs/
+debug/
